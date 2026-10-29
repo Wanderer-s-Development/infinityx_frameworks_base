@@ -16,21 +16,30 @@
 
 package com.android.systemui.qs.tiles.impl.cell.domain.interactor
 
+import android.content.Context
 import android.content.Intent
+import android.os.UserHandle
 import android.provider.Settings
 import com.android.systemui.animation.Expandable
+import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.qs.tiles.base.domain.actions.QSTileIntentUserInputHandler
 import com.android.systemui.qs.tiles.base.domain.interactor.QSTileUserActionInteractor
 import com.android.systemui.qs.tiles.base.domain.model.QSTileInput
 import com.android.systemui.qs.tiles.base.shared.model.QSTileUserAction
+import com.android.systemui.qs.tiles.dialog.InternetDialogManager
 import com.android.systemui.qs.tiles.impl.cell.domain.model.MobileDataTileModel
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepository
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.withContext
 
 class MobileDataTileUserActionInteractor
 @Inject
 constructor(
+    private val context: Context,
+    @Main private val mainContext: CoroutineContext,
+    private val internetDialogManager: InternetDialogManager,
     private val mobileConnectionsRepository: MobileConnectionsRepository,
     private val qsTileIntentUserActionHandler: QSTileIntentUserInputHandler,
 ) : QSTileUserActionInteractor<MobileDataTileModel> {
@@ -51,7 +60,26 @@ constructor(
     }
 
     suspend fun handleClick(expandable: Expandable?) {
-        toggleMobileData()
+        val showDialog =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.QS_DATA_SHOW_DIALOG,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+
+        if (showDialog) {
+            withContext(mainContext) {
+                internetDialogManager.create(
+                    aboveStatusBar = true,
+                    canConfigMobileData = true,
+                    canConfigWifi = false,
+                    expandable = expandable,
+                )
+            }
+        } else {
+            toggleMobileData()
+        }
     }
 
     suspend fun handleSecondaryClick(expandable: Expandable?) {

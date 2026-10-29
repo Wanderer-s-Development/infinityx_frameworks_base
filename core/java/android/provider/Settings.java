@@ -7375,6 +7375,12 @@ public final class Settings {
         public static final String QS_BT_SHOW_DIALOG = "qs_bt_show_dialog";
 
         /**
+         * Whether to show mobile data dialog or toggle mobile data state on tapping mobile data tile
+         * @hide
+         */
+        public static final String QS_DATA_SHOW_DIALOG = "qs_data_show_dialog";
+
+        /**
          * Whether to show the carrier name on the lockscreen
          * @hide
          */
